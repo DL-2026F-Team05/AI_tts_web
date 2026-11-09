@@ -1,0 +1,5 @@
+# TTS 엔진 (인터넷이 필요한 엔진 포함)
+edge-tts>=6.1
+gTTS>=2.5
+uroman>=1.3  # MMS-TTS 한국어 전처리
+# MeloTTS 는 설치가 까다로워서 notebooks/01_tts_compare.ipynb 의 설치 셀을 쓴다

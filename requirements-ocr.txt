@@ -1,0 +1,4 @@
+# OCR 기준선과 영역 검출 (코랩에는 torch 가 이미 있다)
+easyocr>=1.7
+ultralytics>=8.3
+# PaddleOCR 는 다른 패키지와 버전이 잘 부딪혀서 따로 설치한다 (docs/colab_guide.md)

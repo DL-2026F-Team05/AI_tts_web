@@ -1,0 +1,8 @@
+# 기본: 파이프라인(가짜 OCR) + 웹 데모. 코랩에는 대부분 이미 설치돼 있다.
+numpy>=1.24
+opencv-python-headless>=4.8
+Pillow>=10.0
+pydantic>=2.5
+fastapi>=0.110
+uvicorn>=0.27
+python-multipart>=0.0.9

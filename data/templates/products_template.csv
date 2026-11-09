@@ -1,0 +1,3 @@
+product_id,product_name,category,expiry_date,expiry_kind,expiry_face,allergens_contains,allergens_may,notes
+P001,예시 과자,과자,2027-03-15,use_by,back,밀;대두;우유,땅콩;새우,
+P002,예시 우유,유제품,2026-11-25,sell_by,date,우유,,날짜는 윗면에 점 글씨

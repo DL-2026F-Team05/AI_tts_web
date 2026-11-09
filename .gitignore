@@ -1,0 +1,44 @@
+# 파이썬
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+.env
+
+# 실행 결과
+outputs/
+runs/
+logs/
+server.log
+tunnel.log
+cloudflared
+
+# 모델 가중치 (드라이브에 둔다)
+weights/
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.safetensors
+
+# 촬영 데이터 (드라이브에 둔다. 사진이 실수로 올라가지 않게)
+data/raw/
+data/images/
+data/labels/
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.HEIC
+!data/samples/*.jpg
+!docs/**/*.png
+!app/static/**/*.png
+*.zip
+
+# 운영체제
+.DS_Store
+Thumbs.db
+desktop.ini

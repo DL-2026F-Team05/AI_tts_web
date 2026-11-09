@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "packreader"
+version = "0.1.0"
+description = "시각장애인 맞춤형 패키지 텍스트 및 정보 인식 시스템 (딥러닝 2026-2 Team05)"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["packreader*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]

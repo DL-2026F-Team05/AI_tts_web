@@ -1,0 +1,209 @@
+{
+  "schema_version": "1.0",
+  "request_id": "example0001",
+  "created_at": "2026-11-10T09:00:00+09:00",
+  "today": "2026-11-10",
+  "image": {
+    "name": "S001.jpg",
+    "sha1": "ef47242f978dce83962102450805c9f1da0dde16",
+    "width": 1200,
+    "height": 769,
+    "orig_width": 1200,
+    "orig_height": 769
+  },
+  "quality": {
+    "sharpness": 1740.08,
+    "brightness": 226.55,
+    "glare_ratio": 0.0007,
+    "issues": [],
+    "retake": false
+  },
+  "preprocess_ops": [],
+  "regions": [],
+  "boxes": [
+    {
+      "text": "바삭 고소칩",
+      "conf": 0.97,
+      "poly": [
+        [
+          413.0,
+          90.0
+        ],
+        [
+          788.0,
+          90.0
+        ],
+        [
+          788.0,
+          171.0
+        ],
+        [
+          413.0,
+          171.0
+        ]
+      ],
+      "region": "product_name"
+    },
+    {
+      "text": "감자칩 60g",
+      "conf": 0.97,
+      "poly": [
+        [
+          517.0,
+          177.0
+        ],
+        [
+          683.0,
+          177.0
+        ],
+        [
+          683.0,
+          222.0
+        ],
+        [
+          517.0,
+          222.0
+        ]
+      ],
+      "region": "other"
+    },
+    {
+      "text": "제품명: 바삭 고소칩 | 감자칩 60g",
+      "conf": 0.97,
+      "poly": [
+        [
+          76.0,
+          269.0
+        ],
+        [
+          434.0,
+          269.0
+        ],
+        [
+          434.0,
+          308.0
+        ],
+        [
+          76.0,
+          308.0
+        ]
+      ],
+      "region": "product_name"
+    },
+    {
+      "text": "원재료명: 감자(국산), 식물성유지(대두유), 밀가루(밀),",
+      "conf": 0.97,
+      "poly": [
+        [
+          76.0,
+          317.0
+        ],
+        [
+          662.0,
+          317.0
+        ],
+        [
+          662.0,
+          353.0
+        ],
+        [
+          76.0,
+          353.0
+        ]
+      ],
+      "region": "ingredients"
+    }
+  ],
+  "fields": {
+    "product_name": {
+      "value": "바삭 고소칩",
+      "conf": 0.97
+    },
+    "expiry": {
+      "raw": "2027.03.15",
+      "date": "2027-03-15",
+      "kind": "use_by",
+      "status": "ok",
+      "days_left": 125,
+      "conf": 0.97
+    },
+    "allergens": {
+      "contains": [
+        "밀",
+        "대두",
+        "우유"
+      ],
+      "may_contain": [
+        "땅콩",
+        "새우"
+      ],
+      "user_hits": [
+        "우유"
+      ],
+      "user_may_hits": [
+        "땅콩"
+      ],
+      "raw": [
+        "이 제품은 땅콩, 새우를 사용한 제품과 같은 제조시설",
+        "알레르기 유발물질: 밀, 대두, 우유 함유"
+      ],
+      "conf": 0.97
+    },
+    "ingredients": {
+      "value": "감자(국산), 식물성유지(대두유), 밀가루(밀), 탈지분유(우유), 정제소금, 설탕",
+      "conf": 0.97
+    },
+    "nutrition": {
+      "value": "영양정보: 총 내용량 60g, 320kcal, 나트륨 180mg",
+      "conf": 0.97
+    },
+    "caution": {
+      "value": "보관방법: 직사광선을 피해 서늘한 곳에 보관하세요.",
+      "conf": 0.97
+    }
+  },
+  "risk": {
+    "level": "danger",
+    "reasons": [
+      "allergen_contains",
+      "allergen_may"
+    ]
+  },
+  "speech": {
+    "summary": "주의하세요. 우유가 들어 있어요. 땅콩이 섞였을 수 있어요. 같은 시설에서 함께 만들어요. 소비기한은 2027년 3월 15일까지예요. 125일 남았어요. 제품은 바삭 고소칩이에요.",
+    "detail": "알레르기 표시: 밀, 대두, 우유. 같은 시설에서 쓰는 성분: 땅콩, 새우. 원재료: 감자(국산), 식물성유지(대두유), 밀가루(밀), 탈지분유(우유), 정제소금, 설탕. 영양정보: 총 내용량 60g, 320kcal, 나트륨 180mg. 보관과 주의사항: 직사광선을 피해 서늘한 곳에 보관하세요.",
+    "items": [
+      {
+        "key": "allergen_user",
+        "text": "주의하세요. 우유가 들어 있어요."
+      },
+      {
+        "key": "allergen_may",
+        "text": "땅콩이 섞였을 수 있어요. 같은 시설에서 함께 만들어요."
+      },
+      {
+        "key": "expiry",
+        "text": "소비기한은 2027년 3월 15일까지예요. 125일 남았어요."
+      },
+      {
+        "key": "product",
+        "text": "제품은 바삭 고소칩이에요."
+      }
+    ]
+  },
+  "audio": null,
+  "engines": {
+    "ocr": "dummy",
+    "detector": "none",
+    "tts": "browser"
+  },
+  "timing_ms": {
+    "load": 0.0,
+    "preprocess": 0.0,
+    "ocr": 0.0,
+    "extract": 0.0,
+    "compose": 0.0,
+    "total": 0.0
+  },
+  "errors": []
+}

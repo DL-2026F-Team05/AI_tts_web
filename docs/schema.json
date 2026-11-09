@@ -1,0 +1,666 @@
+{
+  "$defs": {
+    "Allergens": {
+      "description": "알레르기 정보. 성분 이름은 extract.allergens.ALLERGENS 의 표준 이름만 쓴다. 담당: 이서영",
+      "properties": {
+        "contains": {
+          "description": "함유",
+          "items": {
+            "type": "string"
+          },
+          "title": "Contains",
+          "type": "array"
+        },
+        "may_contain": {
+          "description": "같은 제조시설 등 혼입 가능",
+          "items": {
+            "type": "string"
+          },
+          "title": "May Contain",
+          "type": "array"
+        },
+        "user_hits": {
+          "description": "사용자 등록 성분 중 contains 에 있는 것",
+          "items": {
+            "type": "string"
+          },
+          "title": "User Hits",
+          "type": "array"
+        },
+        "user_may_hits": {
+          "description": "사용자 등록 성분 중 may_contain 에 있는 것",
+          "items": {
+            "type": "string"
+          },
+          "title": "User May Hits",
+          "type": "array"
+        },
+        "raw": {
+          "description": "근거 문장",
+          "items": {
+            "type": "string"
+          },
+          "title": "Raw",
+          "type": "array"
+        },
+        "conf": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Conf",
+          "type": "number"
+        }
+      },
+      "title": "Allergens",
+      "type": "object"
+    },
+    "Audio": {
+      "properties": {
+        "engine": {
+          "title": "Engine",
+          "type": "string"
+        },
+        "mime": {
+          "title": "Mime",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seconds"
+        }
+      },
+      "required": [
+        "engine",
+        "mime"
+      ],
+      "title": "Audio",
+      "type": "object"
+    },
+    "Expiry": {
+      "description": "소비기한·유통기한. 담당: 이서영 (extract)",
+      "properties": {
+        "raw": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "근거가 된 원문",
+          "title": "Raw"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "kind": {
+          "default": "unknown",
+          "enum": [
+            "use_by",
+            "sell_by",
+            "best_before",
+            "unknown"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "default": "unknown",
+          "enum": [
+            "ok",
+            "soon",
+            "expired",
+            "elsewhere",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "days_left": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Days Left"
+        },
+        "conf": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Conf",
+          "type": "number"
+        }
+      },
+      "title": "Expiry",
+      "type": "object"
+    },
+    "Fields": {
+      "properties": {
+        "product_name": {
+          "$ref": "#/$defs/TextField"
+        },
+        "expiry": {
+          "$ref": "#/$defs/Expiry"
+        },
+        "allergens": {
+          "$ref": "#/$defs/Allergens"
+        },
+        "ingredients": {
+          "$ref": "#/$defs/TextField"
+        },
+        "nutrition": {
+          "$ref": "#/$defs/TextField"
+        },
+        "caution": {
+          "$ref": "#/$defs/TextField"
+        }
+      },
+      "title": "Fields",
+      "type": "object"
+    },
+    "ImageInfo": {
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "sha1": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha1"
+        },
+        "width": {
+          "description": "처리에 쓴 크기. 박스 좌표는 이 크기 기준",
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "orig_width": {
+          "title": "Orig Width",
+          "type": "integer"
+        },
+        "orig_height": {
+          "title": "Orig Height",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "width",
+        "height",
+        "orig_width",
+        "orig_height"
+      ],
+      "title": "ImageInfo",
+      "type": "object"
+    },
+    "Quality": {
+      "description": "사진 품질. 담당: 배창현 (preprocess.quality)",
+      "properties": {
+        "sharpness": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "라플라시안 분산. 클수록 선명",
+          "title": "Sharpness"
+        },
+        "brightness": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "평균 밝기 0~255",
+          "title": "Brightness"
+        },
+        "glare_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "하얗게 날아간 픽셀 비율 0~1",
+          "title": "Glare Ratio"
+        },
+        "issues": {
+          "items": {
+            "enum": [
+              "blur",
+              "dark",
+              "glare",
+              "small"
+            ],
+            "type": "string"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "retake": {
+          "default": false,
+          "description": "다시 찍기를 권할지",
+          "title": "Retake",
+          "type": "boolean"
+        }
+      },
+      "title": "Quality",
+      "type": "object"
+    },
+    "Region": {
+      "description": "영역 검출 결과. 담당: 이도현 (ocr.detector)",
+      "properties": {
+        "name": {
+          "enum": [
+            "product_name",
+            "expiry",
+            "allergen",
+            "ingredients",
+            "nutrition",
+            "caution",
+            "other"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "conf": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Conf",
+          "type": "number"
+        },
+        "bbox": {
+          "description": "x1, y1, x2, y2 (처리 이미지 픽셀)",
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "conf",
+        "bbox"
+      ],
+      "title": "Region",
+      "type": "object"
+    },
+    "Risk": {
+      "description": "위험 판단. 담당: 이서영 (extract.risk)",
+      "properties": {
+        "level": {
+          "default": "unknown",
+          "enum": [
+            "danger",
+            "caution",
+            "ok",
+            "unknown"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "reasons": {
+          "description": "allergen_contains, expired, allergen_may, expiry_soon, expiry_unknown, expiry_elsewhere",
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "title": "Risk",
+      "type": "object"
+    },
+    "Speech": {
+      "description": "안내 문장. 담당: 박세준 (speech.compose)",
+      "properties": {
+        "summary": {
+          "description": "바로 읽어 주는 문장",
+          "title": "Summary",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "description": "'더 듣기'에서 읽는 문장",
+          "title": "Detail",
+          "type": "string"
+        },
+        "items": {
+          "description": "summary 를 이루는 문장, 읽는 순서대로",
+          "items": {
+            "$ref": "#/$defs/SpeechItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "title": "Speech",
+      "type": "object"
+    },
+    "SpeechItem": {
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "text"
+      ],
+      "title": "SpeechItem",
+      "type": "object"
+    },
+    "StageError": {
+      "properties": {
+        "stage": {
+          "title": "Stage",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "stage",
+        "message"
+      ],
+      "title": "StageError",
+      "type": "object"
+    },
+    "TextBox": {
+      "description": "OCR 한 줄. 담당: 이도현 (ocr). 정답 라벨(labels/boxes/*.json)도 같은 형식을 쓴다.",
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "conf": {
+          "default": 1.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Conf",
+          "type": "number"
+        },
+        "poly": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "네 꼭짓점 [[x, y], ...] (처리 이미지 픽셀)",
+          "title": "Poly"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "enum": [
+                "product_name",
+                "expiry",
+                "allergen",
+                "ingredients",
+                "nutrition",
+                "caution",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Region"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextBox",
+      "type": "object"
+    },
+    "TextField": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "conf": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Conf",
+          "type": "number"
+        }
+      },
+      "title": "TextField",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "today": {
+      "description": "소비기한 계산 기준 날짜 (한국 시간)",
+      "format": "date",
+      "title": "Today",
+      "type": "string"
+    },
+    "image": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ImageInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "quality": {
+      "$ref": "#/$defs/Quality"
+    },
+    "preprocess_ops": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Preprocess Ops",
+      "type": "array"
+    },
+    "regions": {
+      "items": {
+        "$ref": "#/$defs/Region"
+      },
+      "title": "Regions",
+      "type": "array"
+    },
+    "boxes": {
+      "items": {
+        "$ref": "#/$defs/TextBox"
+      },
+      "title": "Boxes",
+      "type": "array"
+    },
+    "fields": {
+      "$ref": "#/$defs/Fields"
+    },
+    "risk": {
+      "$ref": "#/$defs/Risk"
+    },
+    "speech": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Speech"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "audio": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Audio"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "engines": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Engines",
+      "type": "object"
+    },
+    "timing_ms": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Timing Ms",
+      "type": "object"
+    },
+    "errors": {
+      "items": {
+        "$ref": "#/$defs/StageError"
+      },
+      "title": "Errors",
+      "type": "array"
+    }
+  },
+  "required": [
+    "request_id",
+    "created_at",
+    "today"
+  ],
+  "title": "AnalysisResult",
+  "type": "object"
+}
