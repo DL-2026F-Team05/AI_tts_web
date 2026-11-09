@@ -67,8 +67,8 @@ print(Pipeline().analyze("data/samples/S001.jpg").speech.summary)
 
 | 모듈 | 들어 있는 것 | 다음 할 일 |
 |---|---|---|
-| 전처리 | 선명도·밝기·반사 판정, 어두울 때 CLAHE | 실제 데이터로 기준값 조정, 보정 방법 추가 |
-| OCR | 가짜 OCR(합성 샘플 정답), EasyOCR·PaddleOCR 래퍼, YOLO 검출기 자리 | 기준 성능 측정, 영역 검출 학습, 파인튜닝 |
+| 전처리 | 선명도·밝기·반사 판정, 어두울 때 CLAHE, 점 글씨 날짜 점 이어 붙이기(OCR 재시도) | 실제 데이터로 기준값 조정, 보정 방법 추가 |
+| OCR | 가짜 OCR(합성 샘플 정답), EasyOCR·PaddleOCR 래퍼, YOLO 검출기 자리, 같은 줄 박스 합치기, 숫자 O·l 오인식 고치기 | 기준 성능 측정, 영역 검출 학습, 파인튜닝 |
 | 추출 | 날짜 4가지 형식, 표시 대상 19종 사전, 함유/혼입 구분, 판단 보류 | `tests/test_extract_spec.py`의 xfail 항목 |
 | 안내·TTS | 위험 우선 문장, 숫자·단위 읽기, 엔진 순서 시도·캐시, 브라우저 음성 대체 | 코랩에서 엔진 비교 실험, 사용자 테스트 |
 | 웹 데모 | 촬영·업로드, 샘플, 알레르기 등록, 다시 듣기·더 듣기, 스크린리더 모드, 개발자 보기 | 실제 엔진 연결 후 폰 시연 |
@@ -82,5 +82,6 @@ print(Pipeline().analyze("data/samples/S001.jpg").speech.summary)
 - [docs/interface.md](docs/interface.md): 모듈끼리 주고받는 형식
 - [docs/data_guide.md](docs/data_guide.md): 촬영 규칙, 파일 이름, 정답표
 - [docs/eval_protocol.md](docs/eval_protocol.md): 평가 지표와 방법
+- [docs/ocr_findings.md](docs/ocr_findings.md): 실제 EasyOCR로 확인한 문제와 대응 (위험 놓침 사례 포함)
 - [docs/colab_guide.md](docs/colab_guide.md): 코랩에서 개발하기
 - [CONTRIBUTING.md](CONTRIBUTING.md): 브랜치와 PR 규칙
