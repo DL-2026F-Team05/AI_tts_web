@@ -16,7 +16,7 @@ def test_s001_full_flow(pipe):
     assert str(r.fields.expiry.date) == "2027-03-15"
     assert r.fields.allergens.contains == ["밀", "대두", "우유"]
     assert r.fields.allergens.may_contain == ["땅콩", "새우"]
-    assert r.speech.summary.startswith("소비기한은 2027년 3월 15일까지예요.")
+    assert r.speech.summary.startswith("소비기한은 내년 3월 15일까지예요. 제품은 바삭 고소칩이에요.")
     assert {"load", "preprocess", "ocr", "extract", "compose", "total"} <= set(r.timing_ms)
 
 

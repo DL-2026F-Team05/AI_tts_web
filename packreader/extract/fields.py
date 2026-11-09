@@ -5,6 +5,9 @@
 - 알레르기 함유: '함유' 또는 '알레르기/유발물질'이 있는 줄
 - 혼입 가능: "이 제품은 ○○, ○○를 사용한 제품과 같은 제조시설..." 표준 문구 (줄이 나뉘어도 처리)
 - 원재료: '원재료명:' 줄 (쉼표로 끝나면 다음 줄까지 이어 붙임)
+
+날짜와 '제품명:' 칸은 박스 단위로, 나머지는 같은 줄 박스를 이어 붙인 줄 단위로 본다.
+실제 EasyOCR 결과(tests/fixtures/easyocr_samples.json)로 확인한 OCR 실수도 일부 견딘다.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import datetime as dt
 import re
 
 from ..config import Config, kst_today
-from ..ocr.base import box_height
+from ..ocr.base import box_height, group_lines
 from ..schema import Allergens, Fields, TextBox, TextField, UserProfile
 from .allergens import find_allergens
 from .dates import find_dates, find_elsewhere, pick_expiry
@@ -24,18 +27,36 @@ _NAME_STOP = re.compile(
     r"소비|유통|기한|원재료|알레르기|유발|함유|보관|영양|제조|kcal|나트륨|식품\s*유형|내용량|주의|섭취|반품|교환|고객|상담|www|http|\d{4}"
 )
 _HANGUL2 = re.compile(r"[가-힣].*[가-힣]")
+# 조사(을/를)는 OCR 이 자주 틀리게 읽어서('새우틀', '호두름') 목록 쪽에 붙은 채로 두고 canonical() 이 떼어 낸다
 _FACILITY = re.compile(
-    r"이\s*제품은\s*(?P<items>[^.]{1,60}?)\s*(?:을|를)\s*사용한\s*제품과\s*같은\s*제조\s*시설", re.S
+    r"이\s*제품은\s*(?P<items>[^.]{1,60}?)\s*사용(?:한|하는)\s*제품과\s*같은\s*(?:제조\s*)?시설", re.S
 )
 _FACILITY_WORDS = re.compile(r"제조\s*시설|같은\s*시설|혼입")
-_CONTAINS_WORDS = re.compile(r"알레르기|유발\s*물질")
+_CONTAINS_WORDS = re.compile(r"알레\S?기|알러지|유발\s*물질")  # OCR 오타 '알레로기' 포함
 _INGREDIENTS = re.compile(r"원재료\s*명?\s*(?:및\s*함량)?\s*[:：]\s*(.+)")
 _NUTRITION = re.compile(r"kcal|나트륨|탄수화물|단백질|지방|영양\s*정보|영양\s*성분")
 _CAUTION = re.compile(r"보관|주의")
 
 
-def _lines(boxes: list[TextBox]) -> list[tuple[str, float, str | None]]:
+def _box_lines(boxes: list[TextBox]) -> list[tuple[str, float, str | None]]:
+    """박스 하나 = 한 줄 (날짜, '제품명:' 칸처럼 박스 단위가 정확한 것에 쓴다)."""
     return [(b.text.strip(), b.conf, b.region) for b in boxes if b.text.strip()]
+
+
+def _visual_lines(boxes: list[TextBox]) -> list[tuple[str, float, str | None]]:
+    """같은 줄에 있는 박스를 이어 붙인 한 줄 (문장이 박스 여러 개로 쪼개진 경우를 위해).
+
+    신뢰도는 가장 낮은 박스 값을 쓴다 ('틀릴 수 있어요' 안내를 보수적으로 하려고).
+    """
+    out = []
+    for group in group_lines([b for b in boxes if b.text.strip()]):
+        regions = [b.region for b in group if b.region]
+        out.append((
+            " ".join(b.text.strip() for b in group),
+            min(b.conf for b in group),
+            max(set(regions), key=regions.count) if regions else None,
+        ))
+    return out
 
 
 def pick_product_name(boxes: list[TextBox], lines) -> TextField:
@@ -127,13 +148,14 @@ def extract_fields(
 ) -> Fields:
     cfg = cfg or Config()
     today = today or kst_today()
-    lines = _lines(boxes)
-    pairs = [(t, c) for t, c, _ in lines]
+    box_lines = _box_lines(boxes)
+    lines = _visual_lines(boxes)
+    pairs = [(t, c) for t, c, _ in box_lines]
 
     expiry = build_expiry(pick_expiry(find_dates(pairs)), find_elsewhere(pairs), today, cfg)
     allergens = match_profile(parse_allergens(lines), profile)
     return Fields(
-        product_name=pick_product_name(boxes, lines),
+        product_name=pick_product_name(boxes, box_lines),
         expiry=expiry,
         allergens=allergens,
         ingredients=_first_match(lines, _INGREDIENTS, continue_on_comma=True),

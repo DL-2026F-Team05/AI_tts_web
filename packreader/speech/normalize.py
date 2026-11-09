@@ -25,6 +25,7 @@ _UNITS = {
     "mm": "밀리미터",
     "%": "퍼센트",
     "℃": "도",
+    "°C": "도",
 }
 
 _NUM = r"\d[\d,]*(?:\.\d+)?"
@@ -33,7 +34,7 @@ _YEAR_RE = re.compile(r"(\d{4})\s*년")
 _MONTH_RE = re.compile(r"(?<![\d.])(\d{1,2})\s*월")
 _DAY_RE = re.compile(r"(?<![\d.])(\d{1,2})\s*일")
 _RANGE_RE = re.compile(r"(\d)\s*~\s*(\d)")
-_UNIT_RE = re.compile(rf"({_NUM})\s*(kcal|mg|kg|mL|ml|cm|mm|g|L|%|℃)(?![A-Za-z])")
+_UNIT_RE = re.compile(rf"({_NUM})\s*(kcal|mg|kg|mL|ml|cm|mm|g|L|%|℃|°C)(?![A-Za-z])")
 _NUMBER_RE = re.compile(_NUM)
 
 

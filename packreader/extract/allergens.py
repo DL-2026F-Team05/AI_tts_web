@@ -33,13 +33,17 @@ _SUFFIXES = ("함유", "포함", "등", "을", "를", "와", "과", "이", "가"
 
 
 def canonical(token: str) -> str | None:
-    """'계란' → '알류', '새우를' → '새우', '밀가루' → None"""
+    """'계란' → '알류', '새우를' → '새우', '새우틀' → '새우', '밀가루' → None"""
     t = token.strip(" .\"'")
     if t in _LOOKUP:
         return _LOOKUP[t]
     for suf in _SUFFIXES:
         if t.endswith(suf) and t[: -len(suf)] in _LOOKUP:
             return _LOOKUP[t[: -len(suf)]]
+    # OCR 이 조사를 잘못 읽은 경우 ('새우를'→'새우틀', '호두를'→'호두름'): 마지막 한 글자를 떼어 본다.
+    # 한 글자 이름(밀, 게, 잣)은 '게시', '밀폐' 같은 오탐이 나서 제외
+    if len(t) >= 3 and len(t[:-1]) >= 2 and t[:-1] in _LOOKUP:
+        return _LOOKUP[t[:-1]]
     return None
 
 

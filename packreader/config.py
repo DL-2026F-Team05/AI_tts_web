@@ -58,7 +58,9 @@ class Config:
     # 정보 추출·판단 기준 (이서영)
     soon_days: int = 3  # 남은 날이 이 값 이하면 '곧 지남'
     expiry_min_conf: float = 0.6  # 이보다 낮으면 소비기한 판단을 보류한다
-    product_min_conf: float = 0.5
+    product_min_conf: float = 0.3  # 이보다 낮으면 제품명을 말하지 않는다 (EasyOCR 한국어 신뢰도는 0.3~0.9로 낮게 나옴)
+    product_sure_conf: float = 0.6  # 이보다 낮으면 '제품은 ~로 보여요'라고 말한다
+    min_box_conf: float = 0.2  # 이보다 낮은 박스만 있으면 '글자를 읽지 못했어요'로 본다
     low_conf_note: float = 0.75  # 이보다 낮은 정보가 있으면 '틀릴 수 있어요' 안내
 
     warmup: bool = True  # 서버 시작 때 모델을 미리 올린다

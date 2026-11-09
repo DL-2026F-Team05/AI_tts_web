@@ -133,6 +133,22 @@ def test_user_hits():
     assert a.user_may_hits == ["땅콩"]
 
 
+def test_real_ocr_noise_in_allergen_lines():
+    """EasyOCR 이 실제로 낸 실수: 를→틀/름, 알레르기→알레로기, 쉼표→세미콜론"""
+    a = run("이 제품은 땅콩, 새우틀 사용한 제품과", "같은 제조시설에서 제조하고 있습니다.").allergens
+    assert a.may_contain == ["땅콩", "새우"]
+    a = run("이 제품은 땅콩, 호두름 사용한 제품과 같은 제조시설에서 제조").allergens
+    assert a.may_contain == ["땅콩", "호두"]
+    assert run("알레로기 유발물질: 밀; 대두, 우유").allergens.contains == ["밀", "대두", "우유"]
+
+
+def test_canonical_tolerates_one_wrong_last_char():
+    assert canonical("새우틀") == "새우"
+    assert canonical("대두유") == "대두"  # 대두유(콩기름)는 대두 성분이 맞다
+    assert canonical("게시") is None  # 한 글자 이름은 떼어 보지 않는다
+    assert canonical("밀폐") is None
+
+
 @pytest.mark.xfail(reason="이서영: 원재료 괄호 속 성분 찾기", strict=False)
 def test_allergens_from_ingredients():
     a = run("원재료명: 밀가루(밀:미국산), 설탕, 탈지분유(우유), 대두유").allergens

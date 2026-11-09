@@ -18,13 +18,17 @@ import numpy as np
 
 from ..config import Config
 from ..schema import Region, TextBox
-from .base import OCREngine, ReadContext, RegionDetector, assign_regions, poly_bbox, reading_order
+from .base import (
+    OCREngine, ReadContext, RegionDetector, assign_regions, clean_boxes, clean_ocr_text, group_lines, poly_bbox,
+    reading_order,
+)
 from .detector import NullDetector, YoloRegionDetector
 from .dummy import DummyOCR
 
 __all__ = [
     "OCREngine", "RegionDetector", "ReadContext", "DummyOCR", "NullDetector", "YoloRegionDetector",
-    "get_ocr_engine", "get_detector", "run_ocr", "assign_regions", "reading_order", "poly_bbox",
+    "get_ocr_engine", "get_detector", "run_ocr", "assign_regions", "reading_order", "group_lines", "poly_bbox",
+    "clean_ocr_text", "clean_boxes",
 ]
 
 
@@ -72,4 +76,4 @@ def run_ocr(
         # TODO(이도현): 영역 밖 글자도 필요하면 전체 이미지를 한 번 더 읽고 합치기
     else:
         boxes = assign_regions(engine.read(rgb, ctx), regions)
-    return regions, reading_order(boxes)
+    return regions, reading_order(clean_boxes(boxes))

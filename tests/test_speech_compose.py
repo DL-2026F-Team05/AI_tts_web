@@ -33,7 +33,7 @@ def test_user_allergen_comes_first_with_warning():
     s = compose(f, profile=UserProfile(allergens=["우유", "땅콩"]), today=TODAY)
     assert keys(s) == ["allergen_user", "allergen_may", "expiry", "product"]
     assert s.items[0].text == "주의하세요. 우유가 들어 있어요."
-    assert s.items[1].text.startswith("땅콩이 섞였을 수 있어요.")
+    assert s.items[1].text == "땅콩이 섞였을 수 있어요."  # '같은 시설' 설명은 더 듣기로
 
 
 def test_expired_is_danger_and_first_without_hits():
@@ -69,9 +69,34 @@ def test_sell_by_label():
     assert compose(f, today=TODAY).items[0].text.startswith("유통기한은 11월 25일까지예요.")
 
 
-def test_other_year_includes_year():
-    assert date_words(dt.date(2027, 3, 15), TODAY) == "2027년 3월 15일"
+def test_date_words_relative_year():
     assert date_words(dt.date(2026, 3, 15), TODAY) == "3월 15일"
+    assert date_words(dt.date(2027, 3, 15), TODAY) == "내년 3월 15일"
+    assert date_words(dt.date(2025, 12, 30), TODAY) == "작년 12월 30일"
+    assert date_words(dt.date(2028, 3, 15), TODAY) == "2028년 3월 15일"
+
+
+def test_far_date_skips_days_left():
+    f = make_fields(date=dt.date(2027, 3, 15))
+    assert compose(f, today=TODAY).items[0].text == "소비기한은 내년 3월 15일까지예요."
+    f = make_fields(date=dt.date(2026, 12, 10))  # 30일 남음 → 말함
+    assert compose(f, today=TODAY).items[0].text == "소비기한은 12월 10일까지예요. 30일 남았어요."
+
+
+def test_hedged_product_name():
+    f = make_fields()
+    f.product_name = TextField(value="바싹 고소집", conf=0.41)
+    s = compose(f, today=TODAY)
+    assert s.items[-1].text == "제품은 바싹 고소집으로 보여요."
+    f.product_name = TextField(value="든든 두유", conf=0.41)
+    assert compose(f, today=TODAY).items[-1].text == "제품은 든든 두유로 보여요."
+    f.product_name = TextField(value="바색 고소집", conf=0.13)
+    assert "product" not in keys(compose(f, today=TODAY))
+
+
+def test_hedged_name_alone_is_not_enough():
+    f = Fields(product_name=TextField(value="바싹 고소집", conf=0.41))
+    assert keys(compose(f, today=TODAY, n_boxes=3)) == ["product", "no_info"]
 
 
 def test_elsewhere_and_unknown():
@@ -84,7 +109,9 @@ def test_elsewhere_and_unknown():
 
 def test_date_with_unknown_kind_is_hedged():
     e = Expiry(status="ok", kind="unknown", date=dt.date(2026, 12, 24), days_left=44, conf=0.83)
-    assert expiry_sentence(e, TODAY) == "표시된 날짜는 12월 24일이에요. 44일 남았어요."
+    assert expiry_sentence(e, TODAY) == "표시된 날짜는 12월 24일이에요."
+    e = Expiry(status="ok", kind="unknown", date=dt.date(2026, 11, 24), days_left=14, conf=0.83)
+    assert expiry_sentence(e, TODAY) == "표시된 날짜는 11월 24일이에요. 14일 남았어요."
 
 
 def test_retake_when_nothing_reliable():

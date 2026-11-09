@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from statistics import median
 from typing import Protocol, runtime_checkable
@@ -73,10 +74,14 @@ def assign_regions(boxes: list[TextBox], regions: list[Region]) -> list[TextBox]
     return out
 
 
-def reading_order(boxes: list[TextBox]) -> list[TextBox]:
-    """위에서 아래, 같은 줄이면 왼쪽에서 오른쪽 순서로 정렬한다. 좌표가 없으면 원래 순서."""
+def group_lines(boxes: list[TextBox]) -> list[list[TextBox]]:
+    """같은 줄에 있는 박스끼리 묶는다 (위→아래, 줄 안에서는 왼쪽→오른쪽).
+
+    EasyOCR 같은 엔진은 한 줄을 여러 박스로 쪼개서 돌려주기도 한다.
+    좌표가 없는 박스가 있으면 박스 하나를 한 줄로 본다.
+    """
     if not boxes or any(not b.poly for b in boxes):
-        return list(boxes)
+        return [[b] for b in boxes]
     items = []
     for b in boxes:
         x1, y1, x2, y2 = poly_bbox(b.poly)
@@ -89,4 +94,32 @@ def reading_order(boxes: list[TextBox]) -> list[TextBox]:
             lines[-1].append(it)
         else:
             lines.append([it])
-    return [it[3] for line in lines for it in sorted(line, key=lambda t: t[1])]
+    return [[it[3] for it in sorted(line, key=lambda t: t[1])] for line in lines]
+
+
+def reading_order(boxes: list[TextBox]) -> list[TextBox]:
+    """위에서 아래, 같은 줄이면 왼쪽에서 오른쪽 순서로 정렬한다. 좌표가 없으면 원래 순서."""
+    return [b for line in group_lines(boxes) for b in line]
+
+
+# 숫자 옆의 O(영문 오) → 0, 숫자 사이의 l·I·| → 1. EasyOCR 결과에서 실제로 나온 실수
+# 예) '6Og' → '60g', '19OmL' → '190mL', '냉장보관(O~10' → '냉장보관(0~10', '2O26.1l.2O' → '2026.11.20'
+_O_AS_ZERO = re.compile(r"(?<=\d)[Oo]|(?<![A-Za-z])[Oo](?=[~\-.,]?\d)")  # 'SO2', 'No.3' 은 그대로
+_L_AS_ONE = re.compile(r"(?<=[\d.])[lI|](?=[\d.])")
+
+
+def clean_ocr_text(text: str) -> str:
+    prev = None
+    while prev != text:  # 'OO' 처럼 이어진 경우까지 바뀔 때까지 반복
+        prev = text
+        text = _O_AS_ZERO.sub("0", text)
+        text = _L_AS_ONE.sub("1", text)
+    return text.strip()
+
+
+def clean_boxes(boxes: list[TextBox]) -> list[TextBox]:
+    out = []
+    for b in boxes:
+        text = clean_ocr_text(b.text)
+        out.append(b if text == b.text else b.model_copy(update={"text": text}))
+    return out

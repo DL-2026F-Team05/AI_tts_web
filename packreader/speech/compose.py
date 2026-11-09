@@ -5,10 +5,11 @@
   2. 내 알레르기 성분 함유 (위험)
   3. 소비기한 지남 (위험)
   4. 내 알레르기 성분 혼입 가능 (주의)
-  5. 소비기한 (남은 날, 다른 면 표기, 못 읽음)
+  5. 소비기한 (30일 이하일 때만 남은 날, 다른 면 표기, 못 읽음)
   6. 등록한 알레르기 성분을 못 찾았다는 안내 (등록했을 때만)
-  7. 제품명
+  7. 제품명 (신뢰도가 낮으면 '~로 보여요')
   8. 알레르기 표시 전체 (알레르기를 등록하지 않았을 때만)
+요약은 10초 안팎이 되게 짧게 둔다 (코랩 edge-tts 기준 처음 문장은 18초였다).
 '더 듣기'(detail)에는 알레르기 전체, 원재료, 영양정보, 보관 방법, 정확도 안내를 넣는다.
 
 화면에 보여 줄 글자를 만든다. 숫자를 한글 읽기로 바꾸는 건 TTS 직전에 normalize 가 한다.
@@ -31,9 +32,20 @@ _RETAKE_SINGLE = {
 _RETAKE_TIP = {"dark": "밝은 곳에서", "glare": "빛이 비치지 않게 각도를 바꿔서", "blur": "휴대폰을 멈춘 채로"}
 
 
+SAY_DAYS_MAX = 30  # 남은 날이 이보다 많으면 날짜만 말한다 ('126일 남았어요'는 듣기에 군더더기)
+
+
 def date_words(d: dt.date, today: dt.date) -> str:
-    """올해면 '11월 20일', 아니면 '2027년 3월 15일'"""
-    return f"{d.month}월 {d.day}일" if d.year == today.year else f"{d.year}년 {d.month}월 {d.day}일"
+    """올해 '11월 20일', 내년 '내년 3월 15일', 작년 '작년 12월 30일', 그 밖에는 '2028년 3월 15일'"""
+    md = f"{d.month}월 {d.day}일"
+    gap = d.year - today.year
+    if gap == 0:
+        return md
+    if gap == 1:
+        return "내년 " + md
+    if gap == -1:
+        return "작년 " + md
+    return f"{d.year}년 {md}"
 
 
 def retake_sentence(issues: list[str]) -> str:
@@ -56,19 +68,20 @@ def expiry_sentence(exp: Expiry, today: dt.date) -> str:
 
     when = date_words(exp.date, today)
     days = exp.days_left if exp.days_left is not None else (exp.date - today).days
+    left = f" {days}일 남았어요." if days <= SAY_DAYS_MAX else ""
     if exp.kind == "unknown":
         if days < 0:
             return f"표시된 날짜는 {when}이에요. 이 날짜가 소비기한이라면 이미 지났어요."
         if days == 0:
             return "표시된 날짜는 오늘이에요."
-        return f"표시된 날짜는 {when}이에요. {days}일 남았어요."
+        return f"표시된 날짜는 {when}이에요.{left}"
     if exp.status == "expired":
         return f"{josa(label, '이/가')} 지났어요. {when}까지였어요."
     if days == 0:
         return f"{josa(label, '이/가')} 오늘까지예요."
     if exp.status == "soon":
         return f"{josa(label, '이/가')} {days}일 남았어요. {when}까지예요."
-    return f"{josa(label, '은/는')} {when}까지예요. {days}일 남았어요."
+    return f"{josa(label, '은/는')} {when}까지예요.{left}"
 
 
 _LABEL_PREFIX = re.compile(r"^\s*[가-힣 ]{2,8}\s*[:：]\s*")
@@ -130,19 +143,28 @@ def compose(
     exp, alg, name = fields.expiry, fields.allergens, fields.product_name
     has_profile = bool(profile and profile.allergens)
     name_ok = bool(name.value) and name.conf >= cfg.product_min_conf
-    found_any = exp.status != "unknown" or bool(alg.contains or alg.may_contain) or name_ok
+    name_sure = name_ok and name.conf >= cfg.product_sure_conf
+    # '~로 보여요' 수준의 제품명만 건졌으면 쓸 만한 정보를 찾은 걸로 치지 않는다 (흐린 사진은 다시 찍기가 먼저)
+    found_any = exp.status != "unknown" or bool(alg.contains or alg.may_contain) or name_sure
 
     items: list[SpeechItem] = []
 
     def add(key: str, text: str) -> None:
         items.append(SpeechItem(key=key, text=text))
 
+    def product_sentence() -> str:
+        if name_sure:
+            return f"제품은 {josa(name.value, '이에요/예요')}."
+        return f"제품은 {josa(name.value, '으로/로')} 보여요."  # 글자가 흐려 틀렸을 수 있으면 단정하지 않는다
+
     if not found_any:
         if quality.retake:
             add("retake", retake_sentence(quality.issues))
         elif n_boxes == 0:
-            add("no_text", "글자를 찾지 못했어요. 포장의 글자가 화면에 가득 차게 다시 찍어 주세요.")
+            add("no_text", "글자를 읽지 못했어요. 글자가 화면에 가득 차게 가까이에서 다시 찍어 주세요.")
         else:
+            if name_ok:
+                add("product", product_sentence())
             add("no_info", "소비기한과 알레르기 정보를 찾지 못했어요. 포장 뒷면의 표시사항을 찍어 주세요.")
         return Speech(summary=" ".join(i.text for i in items), detail=compose_detail(fields, quality, cfg), items=items)
 
@@ -160,7 +182,8 @@ def compose(
     if exp.status == "expired":
         add("expiry", warn(expiry_sentence(exp, today)))
     if alg.user_may_hits:
-        add("allergen_may", f"{join_names(alg.user_may_hits, '이/가')} 섞였을 수 있어요. 같은 시설에서 함께 만들어요.")
+        # '같은 시설에서 만든다'는 설명은 '더 듣기'로 보낸다 (요약은 짧게)
+        add("allergen_may", f"{join_names(alg.user_may_hits, '이/가')} 섞였을 수 있어요.")
     if exp.status != "expired":
         add("expiry", expiry_sentence(exp, today))
     if has_profile and not alg.user_hits and not alg.user_may_hits:
@@ -169,7 +192,7 @@ def compose(
         else:
             add("allergen_none", "알레르기 표시를 찾지 못했어요.")
     if name_ok:
-        add("product", f"제품은 {josa(name.value, '이에요/예요')}.")
+        add("product", product_sentence())
     if not has_profile and alg.contains:
         add("allergen_info", f"알레르기 표시는 {join_names(alg.contains, '이에요/예요')}.")
 

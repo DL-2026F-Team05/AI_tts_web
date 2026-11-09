@@ -20,7 +20,7 @@ from .config import KST, Config, kst_today
 from .extract import assess_risk, extract_fields
 from .io import load_image
 from .ocr import ReadContext, get_detector, get_ocr_engine, run_ocr
-from .preprocess import assess_quality, enhance
+from .preprocess import assess_quality, dot_kernels, enhance, join_dots
 from .schema import AnalysisResult, Audio, ImageInfo, Speech, SpeechItem, StageError, TextBox, UserProfile
 from .speech import compose
 from .speech.tts import TTSManager
@@ -72,9 +72,20 @@ class Pipeline:
             res.quality = assess_quality(rgb, self.cfg)
             rgb, res.preprocess_ops = enhance(rgb, res.quality, self.cfg)
 
+        ctx = ReadContext(sha1=loaded.sha1, name=loaded.name, scale=loaded.scale)
         with self._stage(res, "ocr"):
-            ctx = ReadContext(sha1=loaded.sha1, name=loaded.name, scale=loaded.scale)
             res.regions, res.boxes = run_ocr(self.ocr, self.detector, rgb, ctx)
+
+        # 사진은 멀쩡한데 글자를 하나도 못 읽었으면 점 글씨(뚜껑·바닥 날짜)일 수 있다 → 점을 이어 붙여 한 번 더
+        ocr_failed = any(e.stage == "ocr" for e in res.errors)  # 엔진이 고장 난 거면 다시 해 봐야 소용없다
+        if not ocr_failed and not res.quality.retake and not self._readable(res.boxes):
+            with self._stage(res, "ocr_retry"):
+                for k in dot_kernels(rgb):
+                    regions, boxes = run_ocr(self.ocr, self.detector, join_dots(rgb, k), ctx)
+                    if self._readable(boxes):
+                        res.regions, res.boxes = regions, boxes
+                        res.preprocess_ops.append(f"join_dots{k}")
+                        break
 
         self._understand(res, profile)
         return self._finish(res, t_all, with_audio, speed)
@@ -125,12 +136,17 @@ class Pipeline:
         finally:
             res.timing_ms[stage] = round((time.perf_counter() - t0) * 1000, 1)
 
+    def _readable(self, boxes: list[TextBox]) -> bool:
+        return any(b.conf >= self.cfg.min_box_conf and len(b.text.strip()) >= 2 for b in boxes)
+
     def _understand(self, res: AnalysisResult, profile: UserProfile | None) -> None:
         with self._stage(res, "extract"):
             res.fields = extract_fields(res.boxes, profile, res.today, self.cfg)
             res.risk = assess_risk(res.fields)
         with self._stage(res, "compose"):
-            res.speech = compose(res.fields, res.risk, res.quality, profile, res.today, len(res.boxes), self.cfg)
+            # 점 글씨처럼 엉뚱하게 읽힌 박스(신뢰도 아주 낮음, 한 글자짜리)는 빼고 센다
+            readable = sum(b.conf >= self.cfg.min_box_conf and len(b.text.strip()) >= 2 for b in res.boxes)
+            res.speech = compose(res.fields, res.risk, res.quality, profile, res.today, readable, self.cfg)
         if res.speech is None:
             msg = "분석 중에 문제가 생겼어요. 다시 찍어 주세요."
             res.speech = Speech(summary=msg, items=[SpeechItem(key="error", text=msg)])
